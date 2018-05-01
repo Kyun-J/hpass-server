@@ -3,6 +3,7 @@ const express = require('express')
 
 const util = require('./app_modules/util')
 const db = require('./app_modules/db')
+const login = require('./app_modules/login')
 const app = express()
 
 app.set(() => {app.use(express.bodyParser())})
@@ -18,24 +19,11 @@ app.use((req,res,next) => {
 
 app.listen(8008)
 
-app.get('/test1',(req,res,next) => {
-  data = {}
-  data.name = "test"
-  data.email = "test"
-  data.type = 0
-  db.newUser(data,(msg) => {
-    res.send(msg)
-  })
-})
+util.log('server start...')
 
-app.get('/test2',(req,res,next) => {
-  data = {}
-  data.email = "test"
-  data.type = 0
-  db.findUser(data,(msg) => {
-    res.send(msg)
-  })
-})
+app.post('/kakaoLogin',login.kakaoLogin)
+app.post('/simpleLogin',db.simpleLogin)
+app.post('/newUser',db.newUser)
 
 app.post('/appver',(req,res,next) => {
   res.set('Content-Type', 'application/json charset=utf-8')
@@ -45,7 +33,3 @@ app.post('/appver',(req,res,next) => {
 app.all('*',(req,res,next) => {
   res.sendStatus(404)
 })
-
-function log(msg) {
-  util.log(msg)
-}

@@ -106,6 +106,7 @@ function mlog(req,res) {
 }
 
 function log(msg) {
-	if(!(accessLogStream == null || accessLogStream == undefined)) accessLogStream.write(nowtime() + ' - ' + msg+'\n');
-	console.log(msg);
+  logm = nowtime() + ' - ' + msg
+	if(!(accessLogStream == null || accessLogStream == undefined)) accessLogStream.write(logm+'\n');
+	console.log(logm);
 }
