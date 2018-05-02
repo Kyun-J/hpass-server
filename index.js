@@ -22,6 +22,7 @@ app.listen(8008)
 util.log('server start...')
 
 app.post('/kakaoLogin',login.kakaoLogin)
+app.post('/googleLogin',login.googleLogin)
 app.post('/simpleLogin',db.simpleLogin)
 app.post('/newUser',db.newUser)
 
