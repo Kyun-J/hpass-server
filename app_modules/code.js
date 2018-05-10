@@ -1,17 +1,20 @@
 //basic
-exports.done = '0'
+exports.done = String(0)
 
 //user
-exports.notUser = 'n'
+exports.notUser = String(100)
+exports.userFail = String(101)
+exports.expireToken = String(102)
+exports.alreadyPH = String(103)
 
 //db
-exports.dbErr = '1'
-exports.dbDone = '2'
-exports.dbOk = '3'
-exports.dbNo = '4'
+exports.dbErr = String(1)
+exports.dbDone = String(2)
+exports.dbOk = String(3)
+exports.dbNo = String(4)
 
 //login
-exports.kakao = 0
-exports.naver = 1
-exports.google = 2
-exports.facebook = 3
+exports.kakao = 'k'
+exports.naver = 'n'
+exports.google = 'g'
+exports.facebook = 'f'

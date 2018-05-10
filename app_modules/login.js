@@ -6,7 +6,9 @@ const code = require('./code')
 const db = require('./db')
 const key = require('/root/hpass/key')
 
-const googleClient = new googleAuth.OAuth2Client(code.androidDebug)
+const googleClient = new googleAuth.OAuth2Client(key.androidDebug)
+
+const UserModel = db.UserModel
 
 exports.kakaoLogin = (req,res,next) => {
   request({
@@ -20,7 +22,7 @@ exports.kakaoLogin = (req,res,next) => {
       res.sendStatus(500)
     } else if(response.statusCode == 200) {
       json = JSON.parse(body)
-      db.isUser(json.id,code.kakao, (msg) => {
+      Login(util.makeId(json.id,code.kakao), (msg) => {
         if(msg == code.dbErr) res.sendStatus(500)
         else if(msg == code.notUser) {
           res.set('Content-Type','text/plain')
@@ -44,7 +46,7 @@ exports.googleLogin = (req,res,next) => {
       util.log(err)
       res.sendStatus(500)
     } else {
-      db.isUser(login.getPayload().email,code.google, (msg) => {
+      Login(util.makeId(login.getPayload().sub,code.google),(msg) => {
         if(msg == code.dbErr) res.sendStatus(500)
         else if(msg == code.notUser) {
           res.set('Content-Type','text/plain')
@@ -55,6 +57,53 @@ exports.googleLogin = (req,res,next) => {
           res.send(msg)
         }
       })
+    }
+  })
+}
+
+Login = (id,callback) => {
+  newtoken = db.newPass()
+  UserModel.findOneAndUpdate({
+    _id : id
+  }, {
+    token : newtoken,
+    permission : db.newPermission()
+  }, (err,one) => {
+    if(err) {
+      util.log(err)
+      callback(code.dbErr)
+    }
+    else if(one === null || one === undefined) callback(code.notUser)
+    else {
+      data = {}
+      data.key = one.key
+      data.name = one.name
+      data.token = newtoken
+      callback(data)
+    }
+  })
+}
+
+exports.simpleLogin = (req,res,next) => {
+  newtoken = db.newPass()
+  UserModel.findOneAndUpdate({
+    token : req.body.user_token
+  }, {
+    token : newtoken,
+    permission : db.newPermission()
+  }, (err,one) => {
+    if(err) {
+      util.log(err)
+      res.sendStatus(500)
+    }
+    else if(one === null || one === undefined) res.status(503).send(code.userFail)
+    else {
+      data = {}
+      data.key = one.key
+      data.name = one.name
+      data.token = newtoken
+      res.send(data)
+      util.log("user " + one.id + " do simpleLogin")
     }
   })
 }

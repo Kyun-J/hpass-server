@@ -2,8 +2,11 @@ const bodyparser = require('body-parser')
 const express = require('express')
 
 const util = require('./app_modules/util')
-const db = require('./app_modules/db')
 const login = require('./app_modules/login')
+const friend = require('./app_modules/friend')
+const user = require('./app_modules/user')
+const code = require('./app_modules/code')
+
 const app = express()
 
 app.set(() => {app.use(express.bodyParser())})
@@ -23,11 +26,19 @@ util.log('server start...')
 
 app.post('/kakaoLogin',login.kakaoLogin)
 app.post('/googleLogin',login.googleLogin)
-app.post('/simpleLogin',db.simpleLogin)
-app.post('/newUser',db.newUser)
+app.post('/simpleLogin',login.simpleLogin)
+
+app.post('/newUser',user.newUser)
+app.post('/fireUser',user.fireUser)
+app.post('/findUserByPH',user.findUserByPH)
+
+app.post('/findFriends',friend.findFriends)
+app.post('/addFriend',friend.addFriend)
+app.post('/addFrinedsByPhone',friend.addFrinedsByPH)
+app.post('/blockFriend',friend.blockFriend)
 
 app.post('/appver',(req,res,next) => {
-  res.set('Content-Type', 'application/json charset=utf-8')
+  res.set('Content-Type', 'application/json; charset=utf-8')
   res.send(util.getappver())
 })
 
