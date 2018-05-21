@@ -5,7 +5,10 @@ exports.done = String(0)
 exports.notUser = String(100)
 exports.userFail = String(101)
 exports.expireToken = String(102)
-exports.alreadyPH = String(103)
+exports.alreadyUser = String(103)
+
+//Chat
+exports.alreadyChat = String(202)
 
 //db
 exports.dbErr = String(1)
@@ -17,4 +20,4 @@ exports.dbNo = String(4)
 exports.kakao = 'k'
 exports.naver = 'n'
 exports.google = 'g'
-exports.facebook = 'f'
+exports.facebook = 'f' 

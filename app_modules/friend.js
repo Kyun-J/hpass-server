@@ -4,121 +4,140 @@ const db = require('./db')
 
 const UserModel = db.UserModel
 
-exports.findFriends = (req,res,next) => {
-  UserModel.findOne({
-    token : req.body.user_token
-  }, (err,data) => {
-    if(err) {
-      util.log(err)
-      res.sendStatus(500)
-    }
-    else if(one === null || one === undefined) res.status(503).send(code.userFail)
-    else if(db.isExpire(one.permission)) res.status(503).send(code.expireToken)
-    else {
-      res.set('Content-Type', 'application/json; charset=utf-8')
-      res.send(data.friends)
-    }
-  })
+exports.getFriends = (req,res,next) => {
+  res.set('Content-Type', 'application/json; charset=utf-8')
+  res.send(req.ueserDone.friends)
 }
 
 exports.addFriend = (req,res,next) => {
-  db.confirmUser(req.body.user_token, (msg,one) => {
-    if(msg == code.dbErr) res.sendStatus(500)
-    else if(msg != code.dbOk) res.status(503).send(msg)
-    else {
-      one.friends.push({ _id : req.body.friend_id, phone : req.body.phone})
-      one.save((err) => {
-        if(err) res.sendStatus(500)
-        else res.sendStatus(200)
-      })
-    }
+  one = req.userDone
+  one.friends.push({
+    _id : req.body.friend_id,
+    name : req.body.name,
+    phone : req.body.phone})
+  one.save((err) => {
+    if(err) res.sendStatus(500)
+    else res.sendStatus(200)
   })
 }
 
 exports.addFrinedsById = (req,res,next) => {
   data = JSON.parse(req.body.data)
-  db.confirmUser(data.user_token, (msg,user) => {
-    if(msg == code.dbErr) res.sendStatus(500)
-    else if(msg != code.dbOk) res.status(503).send(msg)
-    else {
-      f_ids = data.friends
-      f_ids.forEach((value) => {
-        UserModel.findOne({
-          _id : value
-        }, (err,one) => {
-          if(!err && !(one === null && one === undefined))
-            user.friends.push({ _id : one._id, phone : one.phone})
-        })
-      })
-      user.save((err) => {
-        if(err) res.sendStatus(500)
-        else res.send(user.friends)
-      })
-    }
+  user = req.userDone
+  f_ids = data.friends
+  f_ids.forEach((value) => {
+    UserModel.findOne({
+      uid : value.uid
+    }, (err,one) => {
+      if(!err && !(one === null || one === undefined))
+        user.friends.push({ _id : one._id, name : one.name, phone : one.phone})
+    })
+  })
+  user.save((err) => {
+    if(err) res.sendStatus(500)
+    else res.send(user.friends)
   })
 }
 
 exports.addFrinedsByPH = (req,res,next) => {
   data = JSON.parse(req.body.data)
-  db.confirmUser(data.user_token, (msg,user) => {
-    if(msg == code.dbErr) res.sendStatus(500)
-    else if(msg != code.dbOk) res.status(503).send(msg)
+  user = req.userDone
+  friends = data.friends
+  friends.forEach((value) => {
+    UserModel.findOne({
+      phone : value.phone
+    }, (err,one) => {
+      if(!err && !(one === null || one === undefined))
+        user.friends.push({ _id : one._id, name : value.name, phone : one.phone })
+    })
+  })
+  user.save((err) => {
+    if(err) res.sendStatus(500)
+    else res.send(user.friends)
+  })
+}
+
+exports.searchFriendByPH = (req,res,next) => {
+  pn = req.body.phone
+  if(pn != "0") {
+    user = req.userDone
+    UserModel.findOne({
+      phone : pn
+    }, (err,one) => {
+      if(err) res.sendStatus(500)
+      else if(one === null || one === undefined) res.sendStatus(200)
+      else {
+        res.set('Content-Type', 'application/json; charset=utf-8')
+        data = {}
+        data.id = one.id
+        data.name = one.name
+        data.phone = one.phone
+        data.isfriend = false
+        for(i = 0 ; i < user.friends.length; i++) {
+          if(one.phone == user.friends[i].phone) {
+            data.isfriend = true
+            break;
+          }
+        }
+        res.send(data)
+      }
+    })
+  }
+}
+
+exports.searchFriendById = (req,res,next) => {
+  user = req.userDone
+  UserModel.findOne({
+    uid : req.body.friend_id
+  }, (err,one) => {
+    if(err) res.sendStatus(500)
+    else if(one === null || one === undefined) res.sendStatus(200)
     else {
-      f_tels = data.friends
-      f_tels.forEach((value) => {
-        UserModel.findOne({
-          phone : value
-        }, (err,one) => {
-          if(!err && !(one === null && one === undefined))
-            user.friends.push({ _id : one._id, phone : one.phone})
-        })
-      })
-      user.save((err) => {
-        if(err) res.sendStatus(500)
-        else res.send(user.friends)
-      })
+      res.set('Content-Type', 'application/json; charset=utf-8')
+      data = {}
+      data.id = one.id
+      data.name = one.name
+      data.phone = one.phone
+      data.isfriend = false
+      for(i = 0 ; i < user.friends.length; i++) {
+        if(one.phone == user.friends[i].phone) {
+          data.isfriend = true
+          break;
+        }
+      }
+      res.send(data)
     }
   })
 }
 
 exports.blockFriend = (req,res,next) => {
-  db.confirmUser(req.body.user_token, (msg,user) => {
-    if(msg == code.dbErr) res.sendStatus(500)
-    else if(msg != code.dbOk) res.status(503).send(msg)
-    else {
-      user.findOneAndUpdate({
-        'friends._id' : req.body.friend_id
-      }, {
-        $set : { 'friends.$.block' : true }
-      }, (err,one) => {
-        if(err) {
-          util.log(err)
-          res.sendStatus(500)
-        }
-        else
-          res.sendStatus(200)
-      })
+  user = req.userDone
+  user.findOneAndUpdate({ //수정필
+    'friends._id' : req.body.friend_id
+  }, {
+    $set : { 'friends.$.block' : true }
+  }, (err,one) => {
+    if(err) {
+      util.log(err)
+      res.sendStatus(500)
     }
+    else
+      res.sendStatus(200)
   })
 }
 
 exports.deleteFriend = (req,res,next) => {
-  db.confirmUser(req.body.user_token, (msg,user) => {
-    if(msg == code.dbErr) res.sendStatus(500)
-    else if(msg != code.dbOk) res.status(503).send(msg)
-    else {
-      user.findOneAndUpdate({
-        'friends._id' : req.body.friend_id
-      }, {
-        $pull : { 'friends._id' : req.body.friend_id }
-      }, (err,one) => {
-        if(err) {
-          util.log(err)
-          res.sendStatus(500)
-        }
-        else
-          res.sendStatus(200)
-      })
+  user = req.userDone
+  user.findOneAndUpdate({ //수정필요
+    'friends._id' : req.body.friend_id
+  }, {
+    $pull : { 'friends._id' : req.body.friend_id }
+  }, (err,one) => {
+    if(err) {
+      util.log(err)
+      res.sendStatus(500)
     }
+    else
+      res.sendStatus(200)
   })
 }

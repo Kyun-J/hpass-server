@@ -6,6 +6,7 @@ mongoose.connect('mongodb://localhost/hpass_db')
 
 const UserSchema = new mongoose.Schema({
   _id : { type : String , required : true },
+  uid : { type : String , required : true , unique : true},
   name : { type : String , required : true },
   phone : { type : String, default : "0" , index : true},
   joinDate : { type : Date, default : Date.now },
@@ -14,16 +15,28 @@ const UserSchema = new mongoose.Schema({
   permission : { type : Number, default : -1},
   friends : [{
     _id : { type : String , required : true },
+    name : { type : String, required: true },
     phone : { type : String, default : "0"},
     block : { type : Boolean, default : false }
   }]
 })
 
-const expire = 24*60*60*1000
+const ChatSchema = new mongoose.Schema({
+  _id : { type : String, required : true },
+  name : { type : String },
+  isGroup : { type : Boolean, default : false },
+  users : [{
+    _id : { type : String , required : true }
+  }]
+})
 
 const UserModel = mongoose.model('User',UserSchema)
+const ChatModel = mongoose.model('Chat',ChatSchema)
+
+const expire = 24*60*60*1000
 
 exports.UserModel = UserModel
+exports.ChatModel = ChatModel
 
 exports.isExpire = (time) => {
   if(Date.now() > time) return true
@@ -40,16 +53,19 @@ exports.newPass = () => {
   return result
 }
 
-exports.confirmUser = (token,callback) => {
+exports.confirmUser = (req,res,next) => {
   UserModel.findOne({
-    token : token
+    token : req.body.token
   }, (err,one) => {
     if(err) {
       util.log(err)
-      callback(code.dbErr)
+      res.sendStatus(500)
     }
-    else if(one === null || one === undefined) callback(code.userFail)
-    else if(Date.now() > one.permission) callback(code.expireToken)
-    else callback(code.dbOk,one)
+    else if(one === null || one === undefined) res.status(202).send(code.userFail)
+    else if(Date.now() > one.permission) res.status(202).send(code.expireToken)
+    else {
+      req.userDone = one
+      next()
+    }
   })
 }

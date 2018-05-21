@@ -22,7 +22,7 @@ exports.kakaoLogin = (req,res,next) => {
       res.sendStatus(500)
     } else if(response.statusCode == 200) {
       json = JSON.parse(body)
-      Login(util.makeId(json.id,code.kakao), (msg) => {
+      Login(util.makeSid(json.id,code.kakao), (msg) => {
         if(msg == code.dbErr) res.sendStatus(500)
         else if(msg == code.notUser) {
           res.set('Content-Type','text/plain')
@@ -46,7 +46,7 @@ exports.googleLogin = (req,res,next) => {
       util.log(err)
       res.sendStatus(500)
     } else {
-      Login(util.makeId(login.getPayload().sub,code.google),(msg) => {
+      Login(util.makeSid(login.getPayload().sub,code.google),(msg) => {
         if(msg == code.dbErr) res.sendStatus(500)
         else if(msg == code.notUser) {
           res.set('Content-Type','text/plain')

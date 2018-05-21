@@ -93,7 +93,7 @@ log = (msg) => {
 	console.log(logm);
 }
 
-exports.makeId = (id,code) => {
+exports.makeSid = (id,code) => {
   return code+'&'+id
 }
 
