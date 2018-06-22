@@ -14,7 +14,7 @@ const UserSchema = new mongoose.Schema({
   token : { type : String, required : true, unique : true },
   permission : { type : Number, default : -1},
   friends : [{
-    _id : { type : String , required : true },
+    _id : { type : String , required : true }, //this is uid
     name : { type : String, required: true },
     phone : { type : String, default : "0"},
     block : { type : Boolean, default : false }
@@ -33,7 +33,8 @@ const ChatSchema = new mongoose.Schema({
 const UserModel = mongoose.model('User',UserSchema)
 const ChatModel = mongoose.model('Chat',ChatSchema)
 
-const expire = 24*60*60*1000
+//const expire = 24*60*60*1000
+const expire = 5*60*1000
 
 exports.UserModel = UserModel
 exports.ChatModel = ChatModel
@@ -55,7 +56,7 @@ exports.newPass = () => {
 
 exports.confirmUser = (req,res,next) => {
   UserModel.findOne({
-    token : req.body.token
+    token : req.body.user_token
   }, (err,one) => {
     if(err) {
       util.log(err)

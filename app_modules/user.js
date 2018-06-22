@@ -8,11 +8,14 @@ exports.newUser = (req,res,next) => {
   ph = req.body.phone
   ud = req.body.uid
   sd = req.body.sid
+  query = []
+  if(ph == "0") query = [ { _id : sd }, { uid : ud } ]
+  else query = [ { phone : ph }, { _id : sd }, { uid : ud } ]
   UserModel.findOne({
-    $or : [ { phone : ph }, { _id : sd }, { uid : ud }]
+    $or : query
   }, (err,one) => {
     if(err) {
-      util.log(err)
+      util.wlog(err)
       res.sendStatus(500)
     } else if(!(one === null || one === undefined)) {
       res.send(code.alreadyUser)
@@ -31,7 +34,7 @@ exports.newUser = (req,res,next) => {
       })
       user.save((err) => {
         if(err) {
-          util.log(err)
+          util.wlog(err)
           res.sendStatus(500)
         } else {
           res.set('Content-Type', 'application/json; charset=utf-8')
@@ -39,7 +42,7 @@ exports.newUser = (req,res,next) => {
           data.key = newkey
           data.token = newtoken
           res.send(data)
-          util.log("new User init")
+          util.wlog("new User init")
         }
       })
     }
@@ -52,7 +55,7 @@ exports.fireUser = (req,res,next) => {
     token : req.body.token
   }, (err) => {
     if(err) {
-      util.log(err)
+      util.wlog(err)
       res.sendStatus(500)
     } else {
       res.sendStatus(200)

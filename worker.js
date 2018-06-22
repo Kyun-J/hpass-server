@@ -3,6 +3,7 @@ const express = require('express')
 
 const db = require('./app_modules/db')
 const util = require('./app_modules/util')
+const analyze = require('./app_modules/analyze')
 const login = require('./app_modules/login')
 const friend = require('./app_modules/friend')
 const chat = require('./app_modules/chat')
@@ -13,7 +14,6 @@ const app = express()
 
 app.set(() => {app.use(express.bodyParser())})
 app.use(bodyparser.urlencoded({extended:false}))
-
 app.use((req,res,next) => {
   req.reqtime = Date.now()
   res.on('finish',function() {
@@ -38,11 +38,8 @@ app.post('/blockFriend',db.confirmUser,friend.blockFriend)
 app.post('/searchFriendByPH',db.confirmUser,friend.searchFriendByPH)
 app.post('/searchFriendById',db.confirmUser,friend.searchFriendById)
 
-app.post('/makeOnORoom',db.confirmUser,chat.makeOnORoom)
-app.post('/makeGroupRoom',db.confirmUser,chat.makeGroupRoom)
 app.post('/findMyRooms',db.confirmUser,chat.findMyRooms)
 app.post('/findRoom',db.confirmUser,chat.findRoom)
-app.post('/enterGroup',db.confirmUser,chat.enterGroup)
 
 app.post('/appver',(req,res,next) => {
   res.set('Content-Type', 'application/json; charset=utf-8')
@@ -51,4 +48,8 @@ app.post('/appver',(req,res,next) => {
 
 app.all('*',(req,res,next) => {
   res.sendStatus(403)
+})
+
+process.on('message', (msg) => {
+  analyze.mqttAnalyze(msg[0],msg[1])
 })

@@ -82,13 +82,19 @@ schedule.scheduleJob({
 
 mlog = (req,res) => {
 	delay = Date.now() - req.reqtime
-	logm = nowtime() + req.connection.remoteAddress + ' ' + req.method + req.originalUrl + ' ' + res.statusCode + ' ' + delay
+	logm = 'worker ' + process.pid + ' ' + nowtime() + req.connection.remoteAddress + ' ' + req.method + req.originalUrl + ' ' + res.statusCode + ' ' + delay
 	if(!(accessLogStream == null || accessLogStream == undefined)) accessLogStream.write(logm+'\n')
 	console.log(logm)
 }
 
 log = (msg) => {
   logm = nowtime() + ' - ' + msg
+	if(!(accessLogStream == null || accessLogStream == undefined)) accessLogStream.write(logm+'\n');
+	console.log(logm);
+}
+
+wlog = (msg) => {
+  logm = 'worker ' + process.pid + ' ' + nowtime() + ' - ' + msg
 	if(!(accessLogStream == null || accessLogStream == undefined)) accessLogStream.write(logm+'\n');
 	console.log(logm);
 }
@@ -102,3 +108,4 @@ exports.log = log
 exports.nowtime = nowtime
 exports.nowdate = nowdate
 exports.getappver = getappver
+exports.wlog = wlog

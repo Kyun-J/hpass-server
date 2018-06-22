@@ -3,23 +3,22 @@ const code = require('./code')
 const db = require('./db')
 
 const ChatModel = db.ChatModel
+const UserModel = db.UserModel
 
-exports.makeOnORoom = (req,res,next) => {
-  user = req.userDone
-  uid = user.uid
-  fid = req.body.friend_id
+exports.makeOnORoom = (uid,fid,rid) => {
   ChatModel.findOne({
     users : { $size : 2 },
-    users : { $all : [{ '$elemMatch' : { _id : uid } }, { '$elemMatch' : { _id : fid } }] }
+    users : { $all : [{ '$elemMatch' : { _id : uid } }, { '$elemMatch' : { _id : fid } }] },
+    isGroup : false
   }, (err,one) => {
     if(err) {
-      util.log(err)
+      log(err)
       res.sendStatus(500)
     }
-    else if(!(one === null || one === undefined)) res.status(202).send(code.alreadyChat)
+    else if(!(one === null || one === undefined)) log(uid + ' ' + fid + ' OnORoom is already exist')
     else {
       room = new ChatModel({
-        _id : req.body.RoomId,
+        _id : rid,
         users : [{
           _id : uid
         }, {
@@ -28,38 +27,100 @@ exports.makeOnORoom = (req,res,next) => {
       })
       room.save((err) => {
         if(err) {
-          util.log(err)
-          res.sendStatus(500)
+          log(err)
         } else {
-          res.sendStatus(200)
+          log('makeOnORoom ' + rid + ' suc')
         }
       })
     }
   })
 }
 
-exports.makeGroupRoom = (req,res,next) => {
-  member = JSON.parse(req.body.member)
-  rid = req.body.RoomId
+exports.makeGroup = (rid,rname,member) => {
   ChatModel.findById(rid, (err,one) => {
     if(err) {
-      util.log(err)
-      res.sendStatus(500)
+      log(err)
     }
-    else if(!(one === null || one === undefined)) res.status(202).send(code.alreadyChat)
+    else if(!(one === null || one === undefined)) log(rid + ' is already exist')
     else {
       room = new ChatModel({
         _id : rid,
-        name : req.body.RoomName,
+        name : rname,
         isGroup : true,
         users : member
       })
       room.save((err) => {
         if(err) {
-          util.log(err)
-          res.sendStatus(500)
+          log(err)
         } else {
-          res.sendStatus(200)
+          log('makeGroup ' + rid + ' suc')
+        }
+      })
+    }
+  })
+}
+
+exports.enterGroup = (uid,rid) => {
+  ChatModel.findById(rid, (err,one) => {
+    if(err) {
+      log(err)
+    } else if(one.isGroup){
+      one.users.push({ _id : uid })
+      one.save((err) => {
+        if(err) {
+          log(err)
+        } else {
+          log(uid + ' enterGroup ' + rid + ' suc')
+        }
+      })
+    }
+  })
+}
+
+exports.exitRoom = (uid,rid) => {
+  ChatModel.findOne({
+    _id : rid,
+    isGroup : false
+  }, (err,one) => {
+    if(err) log(err)
+    else if(!(one === null || one === undefined)){
+      UserModel.find({
+        uid : { $in : [one.users[0]._id,one.users[1]._id] }
+      },(err,users) => {
+        if(err) log(err)
+        else if((users === null || users === undefined) || users.length <= 1) {
+          ChatModel.remove({ _id : rid },(err,one) => {
+            if(err) {
+              log(err)
+            } else {
+              log('room ' + rid + ' is removed')
+            }
+          })
+        } else {
+          log('both users are present')
+        }
+      })
+    } else {
+      ChatModel.findOneAndUpdate({
+        _id : rid,
+        users : { _id : uid },
+        isGroup : true
+      }, { $pull : { users : { _id : uid } } }, { new : true },
+      (err,group) => {
+        if(err) log(err)
+        else if(!(group === null || group === undefined)) {
+          log(uid + ' exitRoom ' + rid + ' suc')
+          if(group.users.length == 0) {
+            ChatModel.remove({ _id : rid },(err,one) => {
+              if(err) {
+                log(err)
+              } else {
+                log('room ' + rid + ' is removed')
+              }
+            })
+          }
+        } else {
+          log(rid + ' not exist')
         }
       })
     }
@@ -68,10 +129,10 @@ exports.makeGroupRoom = (req,res,next) => {
 
 exports.findMyRooms = (req,res,next) => {
   ChatModel.find({
-    'users._id' : req.userDone.uid
+    users : { _id : req.userDone.uid }
   }, (err,rows) => {
     if(err) {
-      util.log(err)
+      log(err)
       res.sendStatus(500)
     } else {
       res.set('Content-Type', 'application/json; charset=utf-8')
@@ -83,7 +144,7 @@ exports.findMyRooms = (req,res,next) => {
 exports.findRoom = (req,res,next) => {
   ChatModel.findById(req.body.RoomId, (err,one) => {
     if(err) {
-      util.log(err)
+      log(err)
       res.sendStatus(500)
     } else {
       res.set('Content-Type', 'application/json; charset=utf-8')
@@ -92,21 +153,6 @@ exports.findRoom = (req,res,next) => {
   })
 }
 
-exports.enterGroup = (req,res,next) => {
-  ChatModel.findById(req.body.RoomId, (err,one) => {
-    if(err) {
-      util.log(err)
-      res.sendStatus(500)
-    } else {
-      one.users.push({ _id : req.userDone.uid })
-      one.save((err) => {
-        if(err) {
-          util.log(err)
-          res.sendStatus(500)
-        } else {
-          res.sendStatus(200)
-        }
-      })
-    }
-  })
+const log = (msg) => {
+  util.wlog(msg)
 }

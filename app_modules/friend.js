@@ -1,12 +1,13 @@
 const util = require('./util')
 const code = require('./code')
 const db = require('./db')
+const chat = require('./chat')
 
 const UserModel = db.UserModel
 
 exports.getFriends = (req,res,next) => {
   res.set('Content-Type', 'application/json; charset=utf-8')
-  res.send(req.ueserDone.friends)
+  res.send(req.userDone.friends)
 }
 
 exports.addFriend = (req,res,next) => {
@@ -24,8 +25,8 @@ exports.addFriend = (req,res,next) => {
 exports.addFrinedsById = (req,res,next) => {
   data = JSON.parse(req.body.data)
   user = req.userDone
-  f_ids = data.friends
-  f_ids.forEach((value) => {
+  friends = data.friends
+  friends.forEach((value) => {
     UserModel.findOne({
       uid : value.uid
     }, (err,one) => {
@@ -69,7 +70,7 @@ exports.searchFriendByPH = (req,res,next) => {
       else {
         res.set('Content-Type', 'application/json; charset=utf-8')
         data = {}
-        data.id = one.id
+        data.id = one.uid
         data.name = one.name
         data.phone = one.phone
         data.isfriend = false
@@ -95,7 +96,7 @@ exports.searchFriendById = (req,res,next) => {
     else {
       res.set('Content-Type', 'application/json; charset=utf-8')
       data = {}
-      data.id = one.id
+      data.id = one.uid
       data.name = one.name
       data.phone = one.phone
       data.isfriend = false
@@ -113,12 +114,12 @@ exports.searchFriendById = (req,res,next) => {
 exports.blockFriend = (req,res,next) => {
   user = req.userDone
   user.findOneAndUpdate({ //수정필
-    'friends._id' : req.body.friend_id
+    friends : { _id : req.body.friend_id }
   }, {
     $set : { 'friends.$.block' : true }
   }, (err,one) => {
     if(err) {
-      util.log(err)
+      util.wlog(err)
       res.sendStatus(500)
     }
     else
@@ -128,13 +129,14 @@ exports.blockFriend = (req,res,next) => {
 
 exports.deleteFriend = (req,res,next) => {
   user = req.userDone
+  fid = req.body.friend_id
   user.findOneAndUpdate({ //수정필요
-    'friends._id' : req.body.friend_id
+    friends : { _id : fid }
   }, {
-    $pull : { 'friends._id' : req.body.friend_id }
+    $pull : { friends : { _id : fid } }
   }, (err,one) => {
     if(err) {
-      util.log(err)
+      util.wlog(err)
       res.sendStatus(500)
     }
     else

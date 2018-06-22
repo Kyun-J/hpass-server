@@ -4,9 +4,9 @@ const googleAuth = require('google-auth-library')
 const util = require('./util')
 const code = require('./code')
 const db = require('./db')
-const key = require('/root/hpass/key')
+const key = require('../key')
 
-const googleClient = new googleAuth.OAuth2Client(key.androidDebug)
+const googleClient = new googleAuth.OAuth2Client(key.androidDebug,key.androidrelease)
 
 const UserModel = db.UserModel
 
@@ -78,6 +78,7 @@ Login = (id,callback) => {
       data = {}
       data.key = one.key
       data.name = one.name
+      data.id = one.uid
       data.token = newtoken
       callback(data)
     }
@@ -96,7 +97,7 @@ exports.simpleLogin = (req,res,next) => {
       util.log(err)
       res.sendStatus(500)
     }
-    else if(one === null || one === undefined) res.status(503).send(code.userFail)
+    else if(one === null || one === undefined) res.status(202).send(code.userFail)
     else {
       data = {}
       data.key = one.key
